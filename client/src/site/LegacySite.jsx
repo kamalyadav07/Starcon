@@ -4,6 +4,7 @@ import { Helmet } from "react-helmet-async";
 import { legacyRedirects, pages, serviceTiles } from "./siteData";
 
 const serviceItems = Object.values(pages).filter((page) => page.kind === "service");
+const contactEndpoint = import.meta.env.VITE_CONTACT_API_URL || "http://localhost/starcon-api/contact.php";
 const clientImages = [
   [39, "Tata Projects"],
   [44, "Uttarakhand Jal Vidyut Nigam Limited"],
@@ -365,7 +366,7 @@ function Contact() {
     const phone = form.get("phone") || "";
     const message = form.get("message") || "";
     try {
-      const response = await fetch("/api/contact", {
+      const response = await fetch(contactEndpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -373,8 +374,10 @@ function Contact() {
         body: JSON.stringify({ name, email, phone, message }),
       });
 
-      if (response.status === 400) {
-        throw new Error("Please fill all required fields.");
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(result.error || "Submission failed. Please try again.");
       }
 
       formElement.reset();

@@ -10,10 +10,11 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+.vite
+vendor
 *.local
 
 .env
-.env.example
 .env.local
 .env.development.local
 .env.test.local

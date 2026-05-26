@@ -1,9 +1,51 @@
+import { useState } from "react";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import FloatingButtons from "../components/layout/FloatingButtons";
 import ScrollTop from "../components/layout/ScrollTop";
 
+const contactEndpoint = import.meta.env.VITE_CONTACT_API_URL || "http://localhost/starcon-api/contact.php";
+
 function Contact() {
+  const [submitState, setSubmitState] = useState("idle");
+  const [submitMessage, setSubmitMessage] = useState("");
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
+
+    setSubmitState("sending");
+    setSubmitMessage("");
+
+    try {
+      const response = await fetch(contactEndpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: form.get("name") || "",
+          email: form.get("email") || "",
+          phone: form.get("phone") || "",
+          message: form.get("message") || "",
+        }),
+      });
+
+      if (!response.ok) {
+        const result = await response.json().catch(() => ({}));
+        throw new Error(result.error || "Submission failed. Please try again.");
+      }
+
+      formElement.reset();
+      setSubmitState("sent");
+      setSubmitMessage("Your query has been submitted successfully.");
+    } catch (error) {
+      setSubmitState("error");
+      setSubmitMessage(error.message || "Submission failed. Please try again.");
+    }
+  };
+
   return (
     <>
       <Navbar />
@@ -27,7 +69,7 @@ function Contact() {
               {/* FORM */}
               <div>
 
-                <form className="space-y-6">
+                <form className="space-y-6" onSubmit={handleSubmit}>
 
                   {/* NAME */}
                   <div>
@@ -37,7 +79,9 @@ function Contact() {
                     </label>
 
                     <input
+                      name="name"
                       type="text"
+                      required
                       className="w-full border border-gray-300 px-4 py-3 outline-none focus:border-[#1b365d]"
                     />
 
@@ -51,7 +95,9 @@ function Contact() {
                     </label>
 
                     <input
+                      name="email"
                       type="email"
+                      required
                       className="w-full border border-gray-300 px-4 py-3 outline-none focus:border-[#1b365d]"
                     />
 
@@ -65,6 +111,7 @@ function Contact() {
                     </label>
 
                     <input
+                      name="phone"
                       type="text"
                       className="w-full border border-gray-300 px-4 py-3 outline-none focus:border-[#1b365d]"
                     />
@@ -79,7 +126,9 @@ function Contact() {
                     </label>
 
                     <textarea
+                      name="message"
                       rows="6"
+                      required
                       className="w-full border border-gray-300 px-4 py-3 outline-none focus:border-[#1b365d]"
                     ></textarea>
 
@@ -88,10 +137,17 @@ function Contact() {
                   {/* BUTTON */}
                   <button
                     type="submit"
+                    disabled={submitState === "sending"}
                     className="bg-[#1b365d] text-white px-8 py-3 hover:bg-[#122744] transition"
                   >
-                    Submit
+                    {submitState === "sending" ? "Submitting..." : "Submit"}
                   </button>
+
+                  {submitMessage && (
+                    <p className={submitState === "error" ? "text-red-700" : "text-green-700"}>
+                      {submitMessage}
+                    </p>
+                  )}
 
                 </form>
 
